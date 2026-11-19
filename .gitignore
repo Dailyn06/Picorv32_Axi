@@ -1,0 +1,4 @@
+/picoRV32/obj_dir/
+/picoRV32/fw/firmware.elf
+/picoRV32/fw/firmware.bin
+*.vcd

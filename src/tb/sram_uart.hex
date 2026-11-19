@@ -1,0 +1,21 @@
+000102b7 // lui  x5, 0x10        (SRAM base)
+11223337 // lui  x6, 0x11223
+34430313 // addi x6, x6, 0x344
+0062a023 // sw   x6, 0(x5)       (0x11223344)
+0002a383 // lw   x7, 0(x5)
+02639863 // bne  x7, x6, fail
+05a00413 // addi x8, x0, 0x5a
+008280a3 // sb   x8, 1(x5)       (update byte lane 1 only)
+0002a383 // lw   x7, 0(x5)
+11226337 // lui  x6, 0x11226
+a4430313 // addi x6, x6, -0x5bc  (0x11225a44)
+00639c63 // bne  x7, x6, fail
+0012c383 // lbu  x7, 1(x5)
+00839863 // bne  x7, x8, fail
+100004b7 // lui  x9, 0x10000     (UART base)
+00748023 // sb   x7, 0(x9)       (send Z from SRAM)
+0000006f // j    .
+100004b7 // fail: lui x9, 0x10000
+02100413 // addi x8, x0, 0x21
+00848023 // sb   x8, 0(x9)       (send ! on mismatch)
+0000006f // j    .

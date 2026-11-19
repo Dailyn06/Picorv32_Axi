@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 286" role="img" aria-labelledby="title description">
+  <title id="title">PicoRV32 AXI-Lite SoC block diagram</title>
+  <desc id="description">The PicoRV32 core connects to a bridge over its native memory bus. The bridge uses an AXI-Lite interconnect and address decoder to access boot ROM, SRAM, and a UART with serial transmit and receive pins.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#526580"/>
+    </marker>
+  </defs>
+  <rect width="1120" height="286" rx="12" fill="#f8fafc"/>
+  <g fill="none" stroke="#526580" stroke-width="2" marker-end="url(#arrow)">
+    <path d="M168 144 H260" marker-start="url(#arrow)"/>
+    <path d="M402 144 H484" marker-start="url(#arrow)"/>
+    <path d="M660 144 H786"/>
+    <path d="M716 144 V56 H786"/>
+    <path d="M716 144 V232 H786"/>
+    <path d="M936 222 H1010"/>
+    <path d="M1010 243 H936"/>
+  </g>
+  <g stroke="#8095b3" stroke-width="1.5" fill="#edf3fa">
+    <rect x="26" y="110" width="142" height="68" rx="8"/>
+    <rect x="260" y="110" width="142" height="68" rx="8"/>
+    <rect x="484" y="110" width="176" height="68" rx="8"/>
+  </g>
+  <g stroke="#659187" stroke-width="1.5" fill="#eaf5f1">
+    <rect x="786" y="22" width="150" height="68" rx="8"/>
+    <rect x="786" y="110" width="150" height="68" rx="8"/>
+    <rect x="786" y="198" width="150" height="68" rx="8"/>
+    <rect x="1010" y="198" width="84" height="68" rx="8"/>
+  </g>
+  <g text-anchor="middle" font-family="system-ui, sans-serif" fill="#182838">
+    <g font-size="16" font-weight="600">
+      <text x="97" y="139">PicoRV32</text>
+      <text x="331" y="139">Bus bridge</text>
+      <text x="572" y="139">AXI-Lite interconnect</text>
+      <text x="861" y="51">Boot ROM</text>
+      <text x="861" y="139">SRAM</text>
+      <text x="861" y="227">UART</text>
+    </g>
+    <g font-size="13" fill="#394d64">
+      <text x="97" y="159">RV32I core</text>
+      <text x="331" y="159">top.v</text>
+      <text x="572" y="159">Address decoder</text>
+      <text x="214" y="132">Native bus</text>
+      <text x="443" y="132">AXI-Lite</text>
+      <text x="861" y="71">Slave 0 · 8 KiB</text>
+      <text x="861" y="159">Slave 1 · 256 bytes</text>
+      <text x="861" y="247">Slave 2</text>
+      <text x="1052" y="226">Serial TX</text>
+      <text x="1052" y="248">Serial RX</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,54 @@
+@200
+-CPU and reset
+@28
+tb_axi_soc.clk
+tb_axi_soc.reset
+tb_axi_soc.dut.cpu_mem_instr
+tb_axi_soc.dut.cpu_mem_valid
+tb_axi_soc.dut.cpu_mem_ready
+@22
+tb_axi_soc.dut.cpu_mem_addr[31:0]
+tb_axi_soc.dut.cpu_mem_rdata[31:0]
+@200
+-AXI-Lite writes
+@22
+tb_axi_soc.dut.m_axi_awaddr[31:0]
+@28
+tb_axi_soc.dut.m_axi_awvalid
+tb_axi_soc.dut.m_axi_awready
+@22
+tb_axi_soc.dut.m_axi_wdata[31:0]
+tb_axi_soc.dut.m_axi_wstrb_r[3:0]
+@28
+tb_axi_soc.dut.m_axi_wvalid
+tb_axi_soc.dut.m_axi_wready
+tb_axi_soc.dut.m_axi_bvalid
+tb_axi_soc.dut.m_axi_bready
+@200
+-AXI-Lite reads
+@22
+tb_axi_soc.dut.m_axi_araddr[31:0]
+@28
+tb_axi_soc.dut.m_axi_arvalid
+tb_axi_soc.dut.m_axi_arready
+@22
+tb_axi_soc.dut.m_axi_rdata[31:0]
+@28
+tb_axi_soc.dut.m_axi_rvalid
+tb_axi_soc.dut.m_axi_rready
+@200
+-SRAM slave
+@28
+tb_axi_soc.dut.s1_awvalid
+tb_axi_soc.dut.s1_wvalid
+tb_axi_soc.dut.s1_arvalid
+tb_axi_soc.dut.s1_rvalid
+@22
+tb_axi_soc.dut.s1_rdata[31:0]
+@200
+-UART slave and pins
+@28
+tb_axi_soc.dut.s2_wvalid
+tb_axi_soc.dut.s2_wready
+tb_axi_soc.uart_tx
+tb_axi_soc.uart_rx
