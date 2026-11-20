@@ -1,4 +1,4 @@
-# PicoRV32 AXI-Lite UART SoC
+# PicoRV32 AXI-Lite SoC
 
 This SoC boots bare-metal RV32I firmware from ROM, accesses SRAM through AXI-Lite, and communicates over a memory-mapped UART. All three behavioral scenarios passed in Vivado Simulator (XSim). Vivado 2026.2 synthesized the design for the Artix-7 **`xc7a35tcpg236-1`** using a 50 MHz clock constraint. The synthesized design uses 1,989 slice LUTs and 2,942 flip-flops and reports +13.985 ns worst setup slack.
 
