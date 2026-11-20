@@ -2,7 +2,17 @@
 
 This SoC runs bare-metal RV32I firmware from ROM and reaches SRAM and a memory-mapped UART through AXI-Lite. All three XSim behavioral tests passed. Vivado 2026.2 synthesized the design for Artix-7 **`xc7a35tcpg236-1`** at a **50 MHz** clock constraint, using **1,989 slice LUTs** and **2,942 flip-flops** with **+13.985 ns** worst setup slack.
 
+Flow: RISC-V CPU -> RTL -> Verification -> Synthesis -> Analysis
+
 [Architecture](#architecture) · [Firmware build](#firmware-build) · [Simulation](#behavioral-simulation) · [Synthesis](#vivado-synthesis) · [Repository layout](#repository-layout)
+
+## Key Features
+- PicoRV32 RISC-V processor core (RV32IMC-capable configuration)
+- Custom AXI4-Lite interconnect with address decoding
+- ROM for program storage and SRAM for runtime data / stack
+- Memory-mapped UART peripheral (8N1, 115200 baud at 50 MHz)
+- Verilator-based RTL simulation and GTKWave waveform debugging
+- Vivado synthesis for Artix-7 xc7a35tcpg236-1 (50 MHz timing constraint met)
 
 ## Architecture
 
