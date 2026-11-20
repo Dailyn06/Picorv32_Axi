@@ -1,8 +1,6 @@
 # PicoRV32 AXI-Lite UART SoC
 
-## Purpose
-
-This project demonstrates how a bare-metal RV32I program boots from ROM, accesses SRAM through AXI-Lite, and communicates over a memory-mapped UART. It provides a simulation baseline for later synthesis and RTL development. The testbench follows transactions from the PicoRV32 memory interface to the selected peripheral and checks what actually appears on the serial pins.
+This SoC boots bare-metal RV32I firmware from ROM, accesses SRAM through AXI-Lite, and communicates over a memory-mapped UART. All three behavioral scenarios passed in Vivado Simulator (XSim). Vivado 2026.2 synthesized the design for the Artix-7 **`xc7a35tcpg236-1`** using a 50 MHz clock constraint. The synthesized design uses 1,989 slice LUTs and 2,942 flip-flops and reports +13.985 ns worst setup slack.
 
 The main design lives in [`src/`](src/). The repository also includes an earlier [native-bus SoC](picoRV32/README.md) under `picoRV32/`. Each version has its own firmware, RTL, and testbench.
 
@@ -37,7 +35,7 @@ The decoder selects a 64 KiB window for each memory, and the smaller ROM and SRA
 | [`src/run.sh`](src/run.sh) | Firmware build and three-scenario Verilator runner |
 | [`picoRV32/`](picoRV32/) | Native-memory-bus variant with its own simulation workflow |
 
-## Build and verification workflow
+## Firmware build and Verilator regression
 
 Use Bash on Linux or WSL, GNU Make, a RISC-V GCC and binutils toolchain, Python 3, timing-capable Verilator, and a C++ compiler supported by that Verilator build. GTKWave is used to inspect waveforms. The default RISC-V tool prefix is `riscv64-unknown-elf`. Set `CROSS` to use a different prefix.
 
@@ -88,13 +86,97 @@ The runner writes `boot_echo.vcd`, `sram.vcd`, and `firmware.vcd` under `src/wav
 
 ![GTKWave SRAM smoke-test capture showing the word write, byte-lane update, readback, and start of UART transmission](src/WaveResult.png)
 
-## Synthesis and further development
+## Vivado project setup
 
-Use `top` as the synthesis top and the nine RTL files listed by `src/run.sh` as inputs. Build the intended firmware first so the ROM contents are available. In simulation, `rom.v` loads a hex file. With `SYNTHESIS` defined, it uses a Verilog case table. The built-in table contains the bundled greeting image. To use the generated firmware instead, set `ROM_CASE_FILE` to the quoted filename `"firmware_rom_case.vh"` and add `src/fw/build/` to the tool's Verilog include search path. The generated case table has already passed the full firmware test in Verilator with `SYNTHESIS` enabled. [RTL source list](src/run.sh) · [ROM selection](src/rom.v) · [Case generator](src/fw/gen_rom_case.py)
+The captured runs used Vivado 2026.2 on Windows. Install Vivado with 7 Series device support and create an **RTL Project**. On the **Parts** tab, select `xc7a35tcpg236-1`. Use the following source sets so the behavioral and synthesis runs pick up the same RTL.
 
-The current milestone is RTL simulation. Technology mapping, resource or area estimates, and timing are future milestones. The UART configuration assumes a 50 MHz input, which corresponds to a 20 ns clock period for the initial synthesis constraint.
+| Vivado source set | Files and settings |
+| --- | --- |
+| Design Sources | From `src/`, add `top.v`, `picorv32.v`, `axi_decoder.v`, `axi_lite_interconnect.v`, `rom.v`, `sram.v`, `uart_axi.v`, `uart_rx.v`, and `uart_tx.v`. Set `top` as the design top. |
+| Simulation Sources | Add `src/tb/tb_axi_soc.sv` as SystemVerilog and set `tb_axi_soc` as the simulation top. Choose **Vivado Simulator** as the target simulator. |
+| Constraints | Create `clk.xdc` with the command below and add it to the project constraints. |
 
-The following behaviors define useful follow-up tests as the design grows.
+```tcl
+create_clock -name soc_clk -period 20.000 [get_ports clk]
+```
+
+The testbench drives a 20 ns clock with reset asserted for the first five falling edges. The XDC applies the equivalent clock period to synthesis and static timing analysis. The UART divider uses 434 clock cycles per bit, giving 8.680 µs per bit at 50 MHz. [Testbench](src/tb/tb_axi_soc.sv) · [UART clock configuration](src/top.v) · [Clock report](clocks.rpt)
+
+### Run behavioral simulation in XSim
+
+1. From the repository root, build the full firmware with `make -C src/fw` in Bash or WSL. This creates `src/fw/build/firmware.hex`. The boot and SRAM images are already in the repository.
+2. In **Settings → Simulation → Simulation**, set `xsim.simulate.xsim.more_options` to the options for one scenario below. Replace `D:/Code/Picorv32_Axi` with the absolute path to your checkout. XSim runs from its generated simulation directory, so an explicit `romhex` path lets both the RTL ROM and the testbench load the same image. [Vivado Simulator options (UG900)](https://docs.amd.com/r/en-US/ug900-vivado-logic-simulation/Vivado-Simulator-Simulation-Options)
+3. Select **Run Simulation → Run Behavioral Simulation**. Enter `run all` in the Tcl Console and check the final `PASS` line and `$finish`. Close the simulation before changing options and launching the next scenario.
+
+| Scenario | XSim options |
+| --- | --- |
+| Boot and echo | `-testplusarg romhex=D:/Code/Picorv32_Axi/src/rom.hex` |
+| SRAM smoke test | `-testplusarg sram_test -testplusarg romhex=D:/Code/Picorv32_Axi/src/tb/sram_uart.hex` |
+| Full firmware | `-testplusarg firmware_test -testplusarg romhex=D:/Code/Picorv32_Axi/src/fw/build/firmware.hex` |
+
+### XSim results
+
+| Scenario | Instruction fetches | SRAM writes / reads | UART TX / RX bytes | AW / W stall cycles | Simulated finish time |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| [Boot and echo](UartSim.png) | 3,744 | 0 / 0 | 261 / 1 | 1,109,663 / 1,109,663 | 22.742590 ms |
+| [SRAM smoke test](SramSim.png) | 704 | 2 / 3 | 1 / 0 | 0 / 0 | 85.270 µs |
+| [Full firmware](FwSim.png) | 6,805 | 70 / 70 | 95 / 3 | 382,777 / 382,777 | 8.587510 ms |
+
+Finish times are simulated from time zero. Fetch totals include instruction fetches during polling and idle loops while the testbench waits for UART activity.
+
+- **Boot and echo.** The CPU fetches from the reset vector, sends ten greeting lines, and echoes the input byte `0xA5`. The testbench counts a stall when `VALID` is high and `READY` is low. The sustained TX traffic exercises UART backpressure on both AXI-Lite write channels. A single 8N1 frame takes 86.8 µs, so serial transmission accounts for most of the simulated runtime. [Boot and echo console](UartSim.png)
+- **SRAM smoke test.** A full-width store writes `0x11223344` at `0x00010000`. A store to byte lane 1 using `WSTRB=0x2` changes the word to `0x11225A44`. The three SRAM reads cover the original word, the updated word, and the byte load that supplies `0x5A` for the UART frame. The testbench decodes that frame as `Z`. [Smoke-test program](src/tb/sram_uart.hex) · [SRAM console](SramSim.png)
+- **Full firmware.** The test checks reads and writes across all 64 SRAM words, exercises byte and halfword access, and verifies signed and unsigned loads. After the SRAM pass message, the testbench sends `0x00`, `0x80`, and `0xFF` one at a time and checks every echo on the TX pin. [Firmware console](FwSim.png)
+
+![Vivado XSim console showing the SRAM pass and successful UART echoes for 0x00, 0x80, and 0xFF](FwSim.png)
+
+### Run synthesis and export the reports
+
+1. Use the default Vivado synthesis strategy and select **Run Synthesis**. With the default setup, Vivado takes the `SYNTHESIS` branch of `rom.v` and compiles the built-in greeting case table into the design. The behavioral `romhex` plusarg selects an image only at simulation runtime.
+2. When synthesis completes, select **Open Synthesized Design** and run these commands in the Tcl Console. They write the reports and functional netlist to a `synthesis_results` directory under the console's current directory. [Vivado synthesis (UG901)](https://docs.amd.com/r/en-US/2026.1-English/ug901-vivado-synthesis/Running-Synthesis-with-Tcl) · [Netlist export (UG835)](https://docs.amd.com/r/2023.2-English/ug835-vivado-tcl-commands/write_verilog)
+
+```tcl
+file mkdir synthesis_results
+report_clocks -file synthesis_results/clocks.rpt
+report_utilization -file synthesis_results/utilization.rpt
+report_timing_summary -file synthesis_results/timing_summary.rpt
+write_verilog -mode funcsim synthesis_results/picorv32_axi_funcsim.v
+```
+
+To synthesize the full verification firmware, generate `firmware_rom_case.vh` with `make -C src/fw`, add `src/fw/build/` to Vivado's Verilog include directories, and define `ROM_CASE_FILE` with the quoted value `"firmware_rom_case.vh"` for synthesis. Rerun synthesis and export fresh reports for that ROM image. [ROM selection](src/rom.v) · [Vivado include files (UG901)](https://docs.amd.com/r/en-US/ug901-vivado-synthesis/Include-Files)
+
+### Resource utilization
+
+| Resource | Used | Available | Utilization |
+| --- | ---: | ---: | ---: |
+| Slice LUTs | 1,989 | 20,800 | 9.56% |
+| LUTs as logic | 1,941 | 20,800 | 9.33% |
+| LUTs as distributed RAM | 48 | 9,600 | 0.50% |
+| Slice registers (all flip-flops) | 2,942 | 41,600 | 7.07% |
+| Block RAM tiles | 0 | 50 | 0.00% |
+| DSP slices | 0 | 90 | 0.00% |
+| Bonded I/O blocks | 4 | 106 | 3.77% |
+| Global clock buffers | 1 | 32 | 3.13% |
+
+The LUT breakdown is included in the 1,989 total. The 64 × 32-bit SoC SRAM accounts for 2,048 flip-flops, about 70% of all slice registers. Vivado warning `[Synth 8-4767]` attributes the register mapping to the asynchronous-reset-sensitive SRAM process. The netlist also shows distributed RAM in the PicoRV32 register file. Multiplication and division are disabled in the CPU configuration, and synthesis uses zero DSP slices. [Utilization report](utilization.rpt) · [Functional netlist](picorv32_axi_funcsim.v) · [SRAM RTL](src/sram.v) · [CPU configuration](src/top.v)
+
+### Timing at 50 MHz
+
+| Check | Worst slack | Total negative slack | Failing / total endpoints |
+| --- | ---: | ---: | ---: |
+| Setup | +13.985 ns | 0.000 ns | 0 / 6,848 |
+| Hold | +0.108 ns | 0.000 ns | 0 / 6,848 |
+| Pulse width | +8.750 ns | 0.000 ns | 0 / 3,031 |
+
+- **Setup.** The worst path runs from the AXI write-address register bit `m_axi_awaddr_reg[29]` to the interconnect's write-response FSM register `FSM_sequential_b_state_reg[1]`. Vivado reports five LUT levels and 5.864 ns of data-path delay. Estimated routing contributes 4.617 ns, about 79% of that delay. [Timing summary](timing_summary.rpt)
+- **Hold and pulse width.** The tightest hold path runs from the CPU's `latched_rd_reg[3]` to a distributed register-file RAM write-address input. The shortest reported high or low clock pulse is 10.000 ns against a 1.250 ns minimum at a RAM clock pin. [Timing summary](timing_summary.rpt)
+- **Constraint coverage.** Vivado reports zero unconstrained internal endpoints. The two non-clock inputs (`reset` and `uart_rx`) and the output (`uart_tx`) have no external I/O delays in the report. These synthesis estimates use unplaced logic. Board-level validation requires pin and I/O constraints for the chosen board, a review of the asynchronous UART RX and reset paths, and timing analysis after placement and routing. [Clock report](clocks.rpt) · [Timing summary](timing_summary.rpt)
+
+### Functional netlist
+
+The exported netlist contains the device-mapped logic for post-synthesis functional simulation with AMD's primitive models. The three console captures document behavioral simulation. Vivado warning `[Synth 8-7137]` flagged a possible simulation mismatch involving set/reset priority in the SRAM mapping. To exercise SRAM in a post-synthesis functional run, synthesize the SRAM smoke-test or full firmware ROM and check its UART output with a testbench that uses the four top-level ports. The behavioral testbench references internal RTL signals directly, and synthesis can change those names and widths. SDF timing simulation requires a timing netlist and a separately generated SDF file. [Functional netlist](picorv32_axi_funcsim.v) · [Vivado simulation guide (UG900)](https://docs.amd.com/r/en-US/ug900-vivado-logic-simulation/Running-Post-Synthesis-and-Post-Implementation-Simulations)
+
+## Further verification
 
 | Area | Follow-up work | References |
 | --- | --- | --- |

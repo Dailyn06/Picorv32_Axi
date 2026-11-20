@@ -1,0 +1,45 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.2 (win64) Build 6713330 Sat Nov 07 01:26:36 MST 2026
+| Date         : Fri Nov 20 12:26:57 2026
+| Host         : LAPTOP-F2IQ4MOI running 64-bit major release  (build 9200)
+| Command      : report_clocks -file D:/VivadoProject/picorv32_axi/synthesis_results/clocks.rpt
+| Design       : top
+| Device       : 7a35t-cpg236
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Clock Report
+
+
+Attributes
+  P: Propagated
+  G: Generated
+  A: Auto-derived
+  R: Renamed
+  V: Virtual
+  I: Inverted
+  S: Pin phase-shifted with Latency mode
+
+Clock    Period(ns)  Waveform(ns)    Attributes  Sources
+soc_clk  20.000      {0.000 10.000}  P           {clk}
+
+
+====================================================
+Generated Clocks
+====================================================
+
+
+
+====================================================
+User Uncertainty
+====================================================
+
+
+
+====================================================
+User Jitter
+====================================================
+
+
